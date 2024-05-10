@@ -30,6 +30,7 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         // await client.connect();
         const queriesCollection = client.db('queryNest').collection('queries');
+        const recommendationCollection = client.db('queryNest').collection('recommendation');
 
         // get all queries
         app.get('/queries', async (req, res) => {
@@ -42,6 +43,14 @@ async function run() {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await queriesCollection.findOne(query);
+            res.send(result);
+        })
+
+        // save a recommendation
+        app.post('/recommendation', async (req, res) => {
+            const recommendationData = req.body;
+            console.log(recommendationData)
+            const result = await recommendationCollection.insertOne(recommendationData);
             res.send(result)
         })
 
