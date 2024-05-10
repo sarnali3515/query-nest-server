@@ -38,6 +38,14 @@ async function run() {
             res.send(result);
         })
 
+        // save a query
+        app.post('/queries', async (req, res) => {
+            const queryData = req.body;
+            console.log(queryData)
+            const result = await queriesCollection.insertOne(queryData);
+            res.send(result)
+        })
+
         //get a single query
         app.get('/query/:id', async (req, res) => {
             const id = req.params.id;
@@ -53,6 +61,7 @@ async function run() {
             const result = await recommendationCollection.insertOne(recommendationData);
             res.send(result)
         })
+
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
