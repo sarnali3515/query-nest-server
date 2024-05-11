@@ -70,6 +70,21 @@ async function run() {
             res.send(result);
         })
 
+        // update a query in db
+        app.put('/query/:id', async (req, res) => {
+            const id = req.params.id;
+            const queryData = req.body;
+            const query = { _id: new ObjectId(id) }
+            const options = { upsert: true }
+            const updateDoc = {
+                $set: {
+                    ...queryData,
+                },
+            }
+            const result = await queriesCollection.updateOne(query, updateDoc, options);
+            res.send(result);
+        })
+
         // save a recommendation
         app.post('/recommendation', async (req, res) => {
             const recommendationData = req.body;
