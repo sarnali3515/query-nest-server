@@ -38,7 +38,7 @@ async function run() {
             res.send(result);
         })
 
-        //get
+        //get by email
         app.get('/queries/:email', async (req, res) => {
             const email = req.params.email;
             const query = { userEmail: email }
@@ -96,6 +96,22 @@ async function run() {
         app.get('/recommendation', async (req, res) => {
             const result = await recommendationCollection.find().toArray();
             res.send(result);
+        })
+
+        //  get my recommendation 
+        app.get('/my-recommendation/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { recommenderEmail: email }
+            const result = await recommendationCollection.find(query).toArray();
+            res.send(result)
+        })
+
+        // get recommendations for me
+        app.get('/recommendation-me/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { userEmail: email }
+            const result = await recommendationCollection.find(query).toArray();
+            res.send(result)
         })
 
 
