@@ -117,7 +117,6 @@ async function run() {
 
         //get a single query
         app.get('/query/:id', verifyToken, async (req, res) => {
-
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await queriesCollection.findOne(query);
