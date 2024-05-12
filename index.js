@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
@@ -32,9 +34,23 @@ async function run() {
         const queriesCollection = client.db('queryNest').collection('queries');
         const recommendationCollection = client.db('queryNest').collection('recommendation');
 
+        // jwt
+        app.post('/jwt', async (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+                expiresIn: '7d'
+            })
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
+            })
+                .send({ success: true })
+        })
+
         // get all queries
         app.get('/queries', async (req, res) => {
-            const result = await queriesCollection.find().toArray();
+            const result = await queriesCollection.find().sort({ _id: -1 }).toArray();
             res.send(result);
         })
 
