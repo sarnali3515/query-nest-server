@@ -9,7 +9,7 @@ const port = process.env.PORT || 5000;
 const app = express();
 
 const corsOptions = {
-    origin: ['http://localhost:5173'],
+    origin: ['http://localhost:5173', 'https://query-nest.web.app', 'https://query-nest.firebaseapp.com'],
     credentials: true,
 }
 app.use(cors(corsOptions));
@@ -36,6 +36,14 @@ const verifyToken = (req, res, next) => {
     }
 }
 
+const cookieOption = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
+}
+
+
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.sgvl42h.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -47,6 +55,8 @@ const client = new MongoClient(uri, {
     }
 });
 
+
+
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -57,28 +67,21 @@ async function run() {
         // jwt
         app.post('/jwt', async (req, res) => {
             const user = req.body;
-            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-                expiresIn: '7d'
-            })
-            res.cookie('token', token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
-            })
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET);
+            res.cookie('token', token, cookieOption)
                 .send({ success: true })
         })
 
         // clear token
-        app.get('/logout', (req, res) => {
+        app.post('/logout', async (req, res) => {
+            const user = req.body;
+            console.log("logging out", user);
             res
-                .clearCookie('token', {
-                    httpOnly: true,
-                    secure: process.env.NODE_ENV === 'production',
-                    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-                    maxAge: 0,
-                })
+                .clearCookie('token', { ...cookieOption, maxAge: 0 })
                 .send({ success: true })
         })
+
+
 
         // get all queries
         app.get('/queries', async (req, res) => {
@@ -244,7 +247,7 @@ async function run() {
 
 
         // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
+        // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
