@@ -29,7 +29,7 @@ const verifyToken = (req, res, next) => {
                 console.log(err)
                 return res.status(401).send({ message: 'Unauthorized Access' })
             }
-            console.log(decoded);
+            // console.log(decoded);
             req.user = decoded
             next()
         })
@@ -110,7 +110,7 @@ async function run() {
         // save a query
         app.post('/queries', async (req, res) => {
             const queryData = req.body;
-            console.log(queryData)
+            // console.log(queryData)
             const result = await queriesCollection.insertOne(queryData);
             res.send(result)
         })
@@ -139,12 +139,41 @@ async function run() {
         })
 
         // save a recommendation
+        // app.post('/recommendation', async (req, res) => {
+        //     const recommendationData = req.body;
+        //     // console.log(recommendationData)
+        //     const result = await recommendationCollection.insertOne(recommendationData);
+        //     // **update recommendCount in queries
+        //     const updateDoc = {
+        //         $set: { $inc: { bid_count: 1 } }
+        //     }
+        //     const recommendQuery = { _id: new ObjectId(req.body.queryId) }
+        //     const updateRecommendCount = await queriesCollection.updateOne(recommendQuery, updateDoc)
+        //     console.log(updateRecommendCount);
+        //     res.send(result)
+        // })
         app.post('/recommendation', async (req, res) => {
             const recommendationData = req.body;
-            console.log(recommendationData)
-            const result = await recommendationCollection.insertOne(recommendationData);
-            res.send(result)
-        })
+
+            try {
+                // Insert recommendation into the recommendation collection
+                const result = await recommendationCollection.insertOne(recommendationData);
+
+                // Update recommendation count in the queries collection
+                const recommendQuery = { _id: new ObjectId(req.body.queryId) };
+                const updateDoc = { $inc: { recommendationCount: 1 } };
+
+                const updateRecommendCount = await queriesCollection.updateOne(recommendQuery, updateDoc);
+
+                console.log(updateRecommendCount);
+
+                res.send(result);
+            } catch (err) {
+                console.error(err);
+                res.status(500).send("Internal Server Error");
+            }
+        });
+
 
         app.get('/recommendation', verifyToken, async (req, res) => {
             const result = await recommendationCollection.find().toArray();
@@ -163,12 +192,43 @@ async function run() {
             res.send(result)
         })
         //  delete my recommendation 
+        // app.delete('/recommendation/:id', async (req, res) => {
+        //     const id = req.params.id;
+        //     const query = { _id: new ObjectId(id) }
+        //     const result = await recommendationCollection.deleteOne(query);
+        //     res.send(result)
+        // })
         app.delete('/recommendation/:id', async (req, res) => {
             const id = req.params.id;
-            const query = { _id: new ObjectId(id) }
-            const result = await recommendationCollection.deleteOne(query);
-            res.send(result)
-        })
+
+            try {
+                // Find the recommendation to be deleted to get the associated queryId
+                const recommendationQuery = { _id: new ObjectId(id) };
+                const recommendation = await recommendationCollection.findOne(recommendationQuery);
+                if (!recommendation) {
+                    return res.status(404).send("Recommendation not found");
+                }
+
+                // Delete the recommendation from the recommendation collection
+                const result = await recommendationCollection.deleteOne(recommendationQuery);
+
+                // Decrease recommendation count in the queries collection
+                const queryId = recommendation.queryId;
+                const queryFilter = { _id: new ObjectId(queryId) };
+                const updateDoc = { $inc: { recommendationCount: -1 } };
+
+                const updateRecommendCount = await queriesCollection.updateOne(queryFilter, updateDoc);
+
+                console.log(updateRecommendCount);
+
+                res.send(result);
+            } catch (err) {
+                console.error(err);
+                res.status(500).send("Internal Server Error");
+            }
+        });
+
+
 
         // get recommendations for me
         app.get('/recommendation-me/:email', verifyToken, async (req, res) => {
