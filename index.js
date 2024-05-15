@@ -141,7 +141,7 @@ async function run() {
             res.send(result);
         })
 
-
+        // recommendation post 
         app.post('/recommendation', async (req, res) => {
             const recommendationData = req.body;
 
@@ -162,6 +162,7 @@ async function run() {
             }
         });
 
+        // all recommendation get
         app.get('/recommendation', verifyToken, async (req, res) => {
             const result = await recommendationCollection.find().toArray();
             res.send(result);
