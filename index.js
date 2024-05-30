@@ -63,6 +63,7 @@ async function run() {
         // await client.connect();
         const queriesCollection = client.db('queryNest').collection('queries');
         const recommendationCollection = client.db('queryNest').collection('recommendation');
+        const favoriteCollection = client.db('queryNest').collection('favorite');
 
         // jwt
         app.post('/jwt', async (req, res) => {
@@ -217,6 +218,70 @@ async function run() {
             }
             const query = { userEmail: email }
             const result = await recommendationCollection.find(query).toArray();
+            res.send(result)
+        })
+
+        // post for add to favorite
+
+        app.post('/favorites', async (req, res) => {
+            const queryData = req.body;
+            // console.log(queryData)
+            const result = await favoriteCollection.insertOne(queryData);
+            res.send(result)
+        })
+        // app.post('/favorites', verifyToken, async (req, res) => {
+        //     try {
+        //         const { itemId } = req.body;
+        //         const userId = req.user.id;
+
+        //         // Add itemId to user's favorites array
+        //         await client.db('queryNest').collection('favorites').updateOne(
+        //             { userId: userId },
+        //             { $addToSet: { favorites: itemId } },
+        //             { upsert: true }
+        //         );
+
+        //         res.sendStatus(200);
+        //     } catch (error) {
+        //         console.error(error);
+        //         res.status(500).send("Internal Server Error");
+        //     }
+        // });
+
+        app.get('/favorites', async (req, res) => {
+            const result = await favoriteCollection.find().sort({ _id: -1 }).toArray();
+            res.send(result)
+        })
+        // get favorite 
+        // app.get('/favorites/:email', verifyToken, async (req, res) => {
+        //     // const tokenEmail = req.user.email;
+        //     const email = req.params.email;
+        //     // if (tokenEmail !== email) {
+        //     //     return res.status(403).send({ message: 'Forbidden Access' })
+        //     // }
+        //     const query = { userEmail: email }
+        //     const result = await favoriteCollection.find(query).sort({ _id: -1 }).toArray();
+        //     res.send(result)
+        // })
+
+        app.get('/favorites/:email', async (req, res) => {
+            const email = req.params.email;
+            try {
+                const query = { userEmail: email };
+                const result = await favoriteCollection.find(query).sort({ _id: -1 }).toArray();
+                res.send(result);
+            } catch (error) {
+                console.error("Error fetching favorites:", error);
+                res.status(500).send({ message: "Error fetching favorites" });
+            }
+        });
+
+        // delete favorite
+        app.delete('/favorite/:id', verifyToken, async (req, res) => {
+
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await favoriteCollection.deleteOne(query);
             res.send(result)
         })
 
