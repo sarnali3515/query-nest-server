@@ -23,3 +23,14 @@ user experience.
 - Firebase
 - MongoDB
 - JSON Web Tokens (JWT)
+
+# Getting Started
+## Prerequisites
+Ensure you have Node.js, npm or yarn, and Git installed.
+
+## Installation
+- Clone the repository: git clone https://github.com/sarnali3515/query-nest-server.git
+- cd querynest server file
+- Install dependencies: npm install
+- Set up backend environment variables (MongoDB config): Create a .env file 
+- Run the backend: nodemon index.js
